@@ -192,6 +192,8 @@ isEmpty =
   , "source"
   , "track"
   , "wbr"
+  , "circle"
+  , "path"
   ]
 
 closeTag :: Parser ()
