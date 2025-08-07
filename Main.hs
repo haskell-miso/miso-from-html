@@ -102,7 +102,7 @@ html = withoutKids <|> withKids
       textNode <|> tagSelfClose
     withKids = do
       (openName, attrs) <- tagOpen
-      kids <- some html
+      kids <- many html
       closeName <- tagClose
       guard (openName == closeName)
       pure (Node True openName attrs kids)
