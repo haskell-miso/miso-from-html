@@ -21,9 +21,6 @@ jobs:
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build using Nix
-        run: nix develop --command bash -c "cabal update && cabal run miso-from-html < index.html"
-
       - name: WASM build
         run: nix develop .#wasm --command bash -c "make clean && make"
 
