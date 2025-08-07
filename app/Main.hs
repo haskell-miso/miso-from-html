@@ -72,8 +72,7 @@ updateModel (OnInput input) = do
   io (SetText <$> liftIO (formatString output))
 updateModel CopyToClipboard = do
   input <- use value
-  let output = ms (process (fromMisoString input))
-  copyClipboard output Copied ErrorCopy
+  copyClipboard input Copied ErrorCopy
 updateModel (ErrorCopy jsval) =
   io_ (consoleLog' jsval)
 updateModel Copied =
