@@ -1,16 +1,19 @@
 -----------------------------------------------------------------------------
 {-# LANGUAGE CPP               #-}
 {-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeApplications  #-}
 {-# LANGUAGE OverloadedStrings #-}
 -----------------------------------------------------------------------------
-module Main where
+module Main (main) where
 -----------------------------------------------------------------------------
+import           Control.Monad
 import           Control.Monad.IO.Class (liftIO)
 import           Prelude hiding (unlines, rem)
+import           Language.Javascript.JSaddle
 -----------------------------------------------------------------------------
 import           Miso hiding (media_)
 import           Miso.Media
-import           Miso.Lens
+import           Miso.Lens hiding (set)
 import           Miso.From.Html (process)
 import           Miso.String
 import qualified Miso.Style as CSS
@@ -55,13 +58,16 @@ formatString = fmap toMisoString . ormolu cfg "<input>" . fromMisoString
           { poColumnLimit = pure (ColumnLimit 50)
           }
       }
-
 -----------------------------------------------------------------------------
 app :: App Model Action
 app = (component (Model mempty) updateModel viewModel)
 #ifndef WASM
   { styles =
       [ Style $ ms $(embedFile "static/style.css")
+      , Href "https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" 
+      ]
+  , scripts =
+      [ Src "https://cdn.jsdelivr.net/npm/toastify-js"
       ]
   }
 #endif
@@ -73,10 +79,10 @@ updateModel (OnInput input) = do
 updateModel CopyToClipboard = do
   input <- use value
   copyClipboard input Copied ErrorCopy
-updateModel (ErrorCopy jsval) =
-  io_ (consoleLog' jsval)
+updateModel (ErrorCopy err) =
+  io_ (consoleLog' err)
 updateModel Copied =
-  io_ (consoleLog "copied")
+  io_ showToast
 updateModel (SetText txt) =
   value .= txt
 -----------------------------------------------------------------------------
@@ -137,4 +143,13 @@ viewModel (Model input) =
         ]
       ]
    ]
+-----------------------------------------------------------------------------
+showToast :: JSM ()
+showToast = do
+  pure ()
+  o <- create
+  set @MisoString "text" "Copied to clipboard..." o
+  set @Int "duration" 3000 o
+  toastify <- new (jsg @MisoString "Toastify") [o]
+  void $ toastify # ("showToast" :: MisoString) $ ()
 -----------------------------------------------------------------------------
