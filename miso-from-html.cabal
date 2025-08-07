@@ -34,11 +34,12 @@ executable miso-from-html
   ghc-options:
     -Wall
   build-depends:
-     attoparsec
-   , base < 5
+     base < 5
    , bytestring
    , containers
    , pretty-simple
+   , html-parse
+   , mtl
    , text
   default-language:
     Haskell2010
