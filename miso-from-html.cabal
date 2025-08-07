@@ -1,3 +1,4 @@
+cabal-version: 3.0
 name:
   miso-from-html
 version:
@@ -9,7 +10,7 @@ description:
 bug-reports:
   https://github.com/dmjio/miso-from-html/issues
 license:
-  BSD3
+  BSD-3-Clause
 license-file:
   LICENSE
 author:
@@ -25,22 +26,68 @@ build-type:
 extra-source-files:
   README.md
   index.html
-cabal-version:
-  >=1.10
 
+common wasm
+  if arch(wasm32)
+    ghc-options:
+      -no-hs-main -optl-mexec-model=reactor "-optl-Wl,--export=hs_start"
+    cpp-options:
+      -DWASM
+
+library
+  default-language:
+    Haskell2010
+  ghc-options:
+    -Wall
+  hs-source-dirs:
+    src
+  exposed-modules:
+    Miso.From.Html
+  build-depends:
+    base < 5,
+    bytestring,
+    containers,
+    html-parse,
+    miso,
+    mtl,
+    pretty-simple,
+    text
+
+-- build w/ vanilla ghc
 executable miso-from-html
+  main-is:
+    Main.hs
+  hs-source-dirs:
+    exe
+  ghc-options:
+    -Wall
+  build-depends:
+    base < 5,
+    miso-from-html,
+    text
+  default-language:
+    Haskell2010
+
+-- Build w/ WASM / JS backends (or vanilla for hot-reload w/ jssaddle)
+executable app
+  import:
+    wasm
   main-is:
     Main.hs
   ghc-options:
     -Wall
+  hs-source-dirs:
+    app
   build-depends:
-     base < 5
-   , bytestring
-   , containers
-   , pretty-simple
-   , html-parse
-   , mtl
-   , text
+    base < 5,
+    jsaddle,
+    miso,
+    miso-from-html
+
+  if !arch(wasm32)
+    build-depends:
+      file-embed
+
   default-language:
     Haskell2010
 

@@ -6,9 +6,8 @@
 {-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 -----------------------------------------------------------------------------
-module Main (main) where
+module Miso.From.Html where
 -----------------------------------------------------------------------------
-import           System.Exit
 import           Control.Monad (guard)
 import           Control.Monad.State
 import           Control.Applicative
@@ -17,8 +16,8 @@ import           Data.Map (Map)
 import qualified Data.Map as M
 import           Data.Maybe
 import           Data.Text (Text)
+import qualified Data.Text.Lazy as LT
 import qualified Data.Text as T
-import qualified Data.Text.IO as T
 import           Prelude hiding (takeWhile)
 import           Text.HTML.Parser
 import           Text.Pretty.Simple
@@ -193,26 +192,36 @@ isEmptyTextNode (ContentText txt)
   $ txt
 isEmptyTextNode _ = False
 -----------------------------------------------------------------------------
-main :: IO ()
-main = do
-  tokens <- parseTokens <$> T.getContents
-  let filtered =
-        [ case t of
-            ContentText txt ->
-              ContentText (T.strip txt)
-            _ -> t
-        | t <- tokens
-        , not (isComment t)
-            && not (isDoctype t)
-            && not (isEmptyTextNode t)
-        ]
-  case parse html filtered of
+getTokens :: Text -> [Token]
+getTokens input =
+  let
+    tokens = parseTokens input
+  in
+    [ case t of
+        ContentText txt ->
+          ContentText (T.strip txt)
+        _ -> t
+    | t <- tokens
+    , not (isComment t)
+      && not (isDoctype t)
+      && not (isEmptyTextNode t)
+    ]
+-----------------------------------------------------------------------------
+process :: Text -> Text
+process input =
+  case parse html (getTokens input) of
     Right r ->
-      pPrint r
-    Left e -> do
-      print e
-      mapM_ print filtered
-      exitFailure
+      T.pack (show r)
+    Left e ->
+      T.pack (show e)
+-----------------------------------------------------------------------------
+processPretty :: Text -> Text
+processPretty input =
+  case parse html (getTokens input) of
+    Right r ->
+      LT.toStrict (pShow r)
+    Left e ->
+      LT.toStrict (pShow e)
 -----------------------------------------------------------------------------
 data ParseError a
   = UnexpectedParse [Token]
