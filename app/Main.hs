@@ -45,21 +45,20 @@ app = (component (Model mempty) updateModel viewModel)
 #endif
 -----------------------------------------------------------------------------
 updateModel :: Action -> Transition Model Action
-updateModel (OnInput input) = do
-  value .= input
-  io_ (consoleLog "got new input")
+updateModel (OnInput input) = value .= input
 -----------------------------------------------------------------------------
 viewModel :: Model -> View Model Action
-viewModel (Model input) = div_
-  [ className "container"
-  ]
-  [ h1_ []
+viewModel (Model input) = div_ []
+ [ h1_ []
     [ "🍜 miso-from-html"
     ]
   , h4_ []
     [ "Convert HTML to miso"
     ]
   , div_
+    [ className "container"
+    ]
+    [ div_
       [ class_ "panel"
       ]
       [ div_
@@ -74,7 +73,7 @@ viewModel (Model input) = div_
         ]
         []
       ]
-  , div_
+    , div_
       [ class_ "panel" ]
       [ div_
         [ class_ "panel-header" ]
@@ -88,4 +87,5 @@ viewModel (Model input) = div_
         ]
       ]
   ]
+]
 -----------------------------------------------------------------------------
