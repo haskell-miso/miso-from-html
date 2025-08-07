@@ -82,7 +82,8 @@ executable app
     base < 5,
     jsaddle,
     miso,
-    miso-from-html
+    miso-from-html,
+    fourmolu
 
   if !arch(wasm32)
     build-depends:

@@ -5,6 +5,7 @@
 -----------------------------------------------------------------------------
 module Main where
 -----------------------------------------------------------------------------
+import           Control.Monad.IO.Class (liftIO)
 import           Prelude hiding (unlines, rem)
 -----------------------------------------------------------------------------
 import           Miso hiding (media_)
@@ -13,6 +14,9 @@ import           Miso.Lens
 import           Miso.From.Html (process)
 import           Miso.String
 import qualified Miso.Style as CSS
+-----------------------------------------------------------------------------
+import           Ormolu (ormolu)
+import           Ormolu.Config
 -----------------------------------------------------------------------------
 #ifndef WASM
 import           Data.FileEmbed
@@ -36,9 +40,22 @@ data Action
   | CopyToClipboard
   | Copied
   | ErrorCopy JSVal
+  | SetText MisoString
 -----------------------------------------------------------------------------
 main :: IO ()
 main = run (startApp app)
+-----------------------------------------------------------------------------
+formatString :: MisoString -> IO MisoString
+formatString = fmap toMisoString . ormolu cfg "<input>" . fromMisoString
+  where
+    cfg =
+      defaultConfig
+      { cfgPrinterOpts =
+          defaultPrinterOpts
+          { poColumnLimit = pure (ColumnLimit 50)
+          }
+      }
+
 -----------------------------------------------------------------------------
 app :: App Model Action
 app = (component (Model mempty) updateModel viewModel)
@@ -50,7 +67,9 @@ app = (component (Model mempty) updateModel viewModel)
 #endif
 -----------------------------------------------------------------------------
 updateModel :: Action -> Transition Model Action
-updateModel (OnInput input) = value .= input
+updateModel (OnInput input) = do
+  let output = ms (process (fromMisoString input))
+  io (SetText <$> liftIO (formatString output))
 updateModel CopyToClipboard = do
   input <- use value
   let output = ms (process (fromMisoString input))
@@ -59,6 +78,8 @@ updateModel (ErrorCopy jsval) =
   io_ (consoleLog' jsval)
 updateModel Copied =
   io_ (consoleLog "copied")
+updateModel (SetText txt) =
+  value .= txt
 -----------------------------------------------------------------------------
 viewModel :: Model -> View Model Action
 viewModel (Model input) =
@@ -112,7 +133,7 @@ viewModel (Model input) =
           [ id_ "output"
           , class_ "output-area"
           ]
-          [ text $ ms (process (fromMisoString input))
+          [ text input
           ]
         ]
       ]
