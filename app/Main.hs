@@ -11,6 +11,7 @@ import           Miso hiding (media_)
 import           Miso.Lens
 import           Miso.From.Html (process)
 import           Miso.String
+import qualified Miso.Style as CSS
 -----------------------------------------------------------------------------
 #ifndef WASM
 import           Data.FileEmbed
@@ -29,7 +30,9 @@ instance ToMisoString Model where
 value :: Lens Model MisoString
 value = lens _value $ \m v -> m { _value = v }
 -----------------------------------------------------------------------------
-data Action = OnInput MisoString
+data Action
+  = OnInput MisoString
+  | CopyToClipboard
   deriving (Show, Eq)
 -----------------------------------------------------------------------------
 main :: IO ()
@@ -46,46 +49,63 @@ app = (component (Model mempty) updateModel viewModel)
 -----------------------------------------------------------------------------
 updateModel :: Action -> Transition Model Action
 updateModel (OnInput input) = value .= input
+updateModel CopyToClipboard = io_ (alert "copied")
 -----------------------------------------------------------------------------
 viewModel :: Model -> View Model Action
-viewModel (Model input) = div_ []
-  [ h1_ []
-    [ "🍜 miso-from-html"
+viewModel (Model input) =
+  div_
+  []
+  [ div_
+    [ CSS.style_ [ CSS.textAlign "center" ]
     ]
-  , h4_ []
-    [ "Convert HTML to miso"
-    ]
-  , div_
-    [ className "container"
-    ]
-    [ div_
-      [ class_ "panel"
+    [ h1_ []
+      [ "🍜 miso-from-html"
       ]
-      [ div_
-        [ class_ "panel-header"
-        ]
-        [ "Input"
-        ]
-      , textarea_
-        [ placeholder_ "Type your text here..."
-        , class_ "input-area"
-        , onInput OnInput
-        ]
-        []
+    , h4_ []
+      [ "Convert HTML to miso"
       ]
+    , button_
+      [ onClick CopyToClipboard
+      , CSS.style_
+        [ CSS.width "180px"
+        , CSS.height "60px"
+        , CSS.margin "5px"
+        ]
+      ]
+      [ "Copy to Clipboard"
+      ]
+    ]
     , div_
-      [ class_ "panel" ]
+      [ className "container"
+      ]
       [ div_
-        [ class_ "panel-header" ]
-        [ "Output"
+        [ class_ "panel"
         ]
-      , pre_
-        [ id_ "output"
-        , class_ "output-area"
+        [ div_
+          [ class_ "panel-header"
+          ]
+          [ "HTML Input"
+          ]
+        , textarea_
+          [ placeholder_ "Type your text here..."
+          , class_ "input-area"
+          , onInput OnInput
+          ]
+          []
         ]
-        [ text $ ms (process (fromMisoString input))
+      , div_
+        [ class_ "panel" ]
+        [ div_
+          [ class_ "panel-header" ]
+          [ "miso View output"
+          ]
+        , pre_
+          [ id_ "output"
+          , class_ "output-area"
+          ]
+          [ text $ ms (process (fromMisoString input))
+          ]
         ]
       ]
-    ]
-  ]
+   ]
 -----------------------------------------------------------------------------
