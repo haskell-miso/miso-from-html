@@ -7,6 +7,6 @@ allow-newer:
 source-repository-package
   type: git
   location: https://github.com/dmjio/miso
-  tag: 92f44e41449af666a79aebe0e649502fcd512c6c
+  tag: b84d9d506e17782537f6dfa0c6a1a466ce095497
 
 flags: +template-haskell

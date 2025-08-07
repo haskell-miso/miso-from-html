@@ -8,6 +8,7 @@ module Main where
 import           Prelude hiding (unlines, rem)
 -----------------------------------------------------------------------------
 import           Miso hiding (media_)
+import           Miso.Media
 import           Miso.Lens
 import           Miso.From.Html (process)
 import           Miso.String
@@ -33,7 +34,8 @@ value = lens _value $ \m v -> m { _value = v }
 data Action
   = OnInput MisoString
   | CopyToClipboard
-  deriving (Show, Eq)
+  | Copied
+  | ErrorCopy JSVal
 -----------------------------------------------------------------------------
 main :: IO ()
 main = run (startApp app)
@@ -49,7 +51,14 @@ app = (component (Model mempty) updateModel viewModel)
 -----------------------------------------------------------------------------
 updateModel :: Action -> Transition Model Action
 updateModel (OnInput input) = value .= input
-updateModel CopyToClipboard = io_ (alert "copied")
+updateModel CopyToClipboard = do
+  input <- use value
+  let output = ms (process (fromMisoString input))
+  copyClipboard output Copied ErrorCopy
+updateModel (ErrorCopy jsval) =
+  io_ (consoleLog' jsval)
+updateModel Copied =
+  io_ (consoleLog "copied")
 -----------------------------------------------------------------------------
 viewModel :: Model -> View Model Action
 viewModel (Model input) =
