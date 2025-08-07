@@ -1,65 +1,72 @@
-{-# LANGUAGE DerivingStrategies         #-}
+-----------------------------------------------------------------------------
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module Main where
-
-import           Control.Applicative
-
-import           Data.Attoparsec.Text
-import           Data.Char
-import           Data.List            hiding (takeWhile)
-import           Data.Map             (Map)
-import qualified Data.Map             as M
-import           Data.Maybe
-import           Data.Text            (Text)
-import qualified Data.Text            as T
-import qualified Data.Text.IO         as T
-import           Prelude              hiding (takeWhile)
+-----------------------------------------------------------------------------
+module Main (main) where
+-----------------------------------------------------------------------------
 import           System.Exit
+import           Control.Monad (guard)
+import           Control.Monad.State
+import           Control.Applicative
+import           Data.List hiding (takeWhile)
+import           Data.Map (Map)
+import qualified Data.Map as M
+import           Data.Maybe
+import           Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.IO as T
+import           Prelude hiding (takeWhile)
+import           Text.HTML.Parser
 import           Text.Pretty.Simple
-
+-----------------------------------------------------------------------------
+type IsOpen = Bool
+-----------------------------------------------------------------------------
 data HTML
-  = Branch TagName [ Attr ] [ HTML ]
-  | Leaf Text
-  deriving (Eq)
-
+  = Node IsOpen HTMLTagName [ HTMLAttr ] [ HTML ]
+  | TextNode Text
+  deriving stock (Eq)
+-----------------------------------------------------------------------------
 newtype CSS = CSS (Map Text Text)
-  deriving (Eq)
+  deriving stock (Eq)
   deriving newtype (Monoid, Semigroup)
-
+-----------------------------------------------------------------------------
 instance Show CSS where
   show (CSS hmap) =
     mconcat
-    [ "M.fromList [ "
+    [ "CSS.style [ "
     , intercalate "," (go <$> M.assocs hmap)
     , " ]"
     ]
     where
-      go (k,v) = "(" <> "\"" <>
-        T.unpack k <> "\" ," <> "\"" <>
-          T.unpack v <> "\" )"
-
-data Attr = Attr Text (Maybe Text)
+      go (k,v) = "\"" <>
+        T.unpack (T.strip k) <> "\" =: " <> "\"" <>
+          T.unpack (T.strip v) <> "\""
+-----------------------------------------------------------------------------
+data HTMLAttr = HTMLAttr Text (Maybe Text)
   deriving (Eq)
-
+-----------------------------------------------------------------------------
 instance Show HTML where
-  show (Leaf x) = "\"" <> T.unpack x <> "\""
-  show (Branch t as cs) =
+  show (TextNode x) = "\"" <> T.unpack x <> "\""
+  show (Node isOpen t as cs) =
     mconcat $
     [ T.unpack t
     , "_ "
     , show as
-    ] ++ [ show cs | not (isEmpty t) ]
-
-instance Show Attr where
-  show (Attr "style" (Just v)) =
-    mconcat
-    [ "style_ $ "
-    , T.unpack v
+    ] ++
+    [ show cs
+    | isOpen
     ]
-  show (Attr k (Just v))
+-----------------------------------------------------------------------------
+instance Show HTMLAttr where
+  show (HTMLAttr "style" (Just v)) =
+    mconcat
+    [ T.unpack v
+    ]
+  show (HTMLAttr k (Just v))
     | T.any (=='-') k =
       mconcat
       [ "textProp \""
@@ -77,199 +84,157 @@ instance Show Attr where
       , T.unpack v
       , "\""
       ]
-  show (Attr "checked" Nothing) =
+  show (HTMLAttr "checked" Nothing) =
     "checked_ True"
-  show (Attr k Nothing) =
+  show (HTMLAttr k Nothing) =
     mconcat
     [ "textProp \""
     , T.unpack k
     , "\" \"\""
     ]
-
-type TagName = Text
-
-tag :: Parser (TagName, [Attr])
-tag = do
-  _ <- char '<'
-  t <- takeWhile1 isAlphaNum
-  _ <- char '>'
-  pure (t, [])
-
-tagWithAttrs :: Parser (TagName, [Attr])
-tagWithAttrs = do
-  _ <- char '<'
-  t <- takeWhile1 (/=' ')
-  _ <- char ' '
-  as <- attrs `sepBy` char ' '
-  skipSpace
-  _ <- char '/' <|> char '>'
-  pure (t, as)
-
-attrs :: Parser Attr
-attrs = kvAttr <|> attr
-  where
-    predicate x = isAlpha x || x == '-'
-    kvAttr  = Attr <$> key <*> do Just <$> value
-    attr    = flip Attr Nothing <$> justKey
-    justKey = takeWhile1 predicate
-    key = do
-      k <- takeWhile1 predicate
-      _ <- char '='
-      pure k
-    value = do
-      _ <- char '"'
-      v <- takeWhile (/= '"')
-      _ <- char '"'
-      pure v
-
-children :: Parser [HTML]
-children = many htmlOrLeaf
-
-htmlOrLeaf :: Parser HTML
-htmlOrLeaf = html <|> leaf
-
-leaf :: Parser HTML
-leaf = Leaf <$> do
-  strip . T.filter (/='\n') <$>
-    takeWhile1 (/='<')
-  where
-    strip = T.reverse
-          . T.dropWhile (==' ')
-          . T.reverse
-          . T.dropWhile (==' ')
-
-dropFluff :: Parser ()
-dropFluff = do
-  _ <- takeWhile (`elem` ("\n " :: String))
-  pure ()
-
+-----------------------------------------------------------------------------
+type HTMLTagName = Text
+-----------------------------------------------------------------------------
 html :: Parser HTML
-html = do
-  (openTag, as) <-
-    tag <|> tagWithAttrs
-  dropFluff
-  cs <-
-    if isEmpty openTag
-      then pure []
-      else do
-        cs <- children
-        closeTag
-        pure cs
-  dropFluff
-  let hasStyle (Attr k _) = k == "style"
-  pure $ case find hasStyle as of
-    Just (Attr key (Just cssText)) -> do
-      let parsedCss = T.pack $ show (parseCss cssText)
-          newAttr = Attr key (Just parsedCss)
-          oldAttrs = filter (not . hasStyle) as
-      Branch openTag (newAttr : oldAttrs) cs
-    _ ->
-      Branch openTag as cs
-
-parseCss :: Text -> CSS
-parseCss cssText = CSS cssMap
+html = withoutKids <|> withKids
   where
-    cssMap
-      = M.fromList
-      [ (k,v)
-      | [k,v] <- T.splitOn ":" <$> T.splitOn ";" cssText
-      ]
+    withoutKids =
+      textNode <|> tagSelfClose
+    withKids = do
+      (openName, attrs) <- tagOpen
+      kids <- many html
+      closeName <- tagClose
+      guard (openName == closeName)
+      pure (Node True openName attrs kids)
+-----------------------------------------------------------------------------
+tagOpen :: Parser (TagName, [HTMLAttr])
+tagOpen = do
+  TagOpen openName attrs <-
+    satisfy $ \case
+      TagOpen{} -> True
+      _ -> False
+  let htmlAttrs =
+        [ processStyle (HTMLAttr attrName value)
+        | Attr attrName attrValue <- attrs
+        , let value
+                | T.null attrValue = Nothing
+                | otherwise = Just attrValue
+        ]
+  pure (openName, htmlAttrs)
+-----------------------------------------------------------------------------
+tagClose :: Parser TagName
+tagClose = do
+  TagClose closeName <-
+    satisfy $ \case
+      TagClose{} -> True
+      _ -> False
+  pure closeName
+-----------------------------------------------------------------------------
+tagSelfClose :: Parser HTML
+tagSelfClose = do
+  TagSelfClose name attrs <-
+    satisfy $ \case
+      TagSelfClose {} -> True
+      _ -> False
+  let htmlAttrs =
+        [ processStyle (HTMLAttr attrName value)
+        | Attr attrName attrValue <- attrs
+        , let value
+                | T.null attrValue = Nothing
+                | otherwise = Just attrValue
+        ]
+  pure (Node False name htmlAttrs [])
+-----------------------------------------------------------------------------
+textNode :: Parser HTML
+textNode = leaf <|> leafChar
+  where
+    leaf :: Parser HTML
+    leaf = do
+      ContentText txt <-
+        satisfy $ \case
+          ContentText {} -> True
+          _ -> False
+      pure (TextNode txt)
 
-isEmpty :: Text -> Bool
-isEmpty =
-  flip elem
-  [ "area"
-  , "base"
-  , "br"
-  , "col"
-  , "embed"
-  , "hr"
-  , "img"
-  , "input"
-  , "link"
-  , "meta"
-  , "param"
-  , "source"
-  , "track"
-  , "wbr"
-  , "circle"
-  , "path"
-  ]
-
-closeTag :: Parser ()
-closeTag = do
-  _ <- string "</"
-  _ <- takeWhile1 isAlphaNum
-  _ <- char '>'
-  pure ()
-
+    leafChar :: Parser HTML
+    leafChar = do
+      ContentChar t <-
+        satisfy $ \case
+          ContentChar {} -> True
+          _ -> False
+      pure (TextNode (T.singleton t))
+------------------------------------------------------------------------------
+processStyle :: HTMLAttr -> HTMLAttr
+processStyle (HTMLAttr "style" (Just cssText)) =
+  HTMLAttr "style" $ Just (T.pack (show parsedCss))
+    where
+      parsedCss :: CSS
+      parsedCss = CSS cssMap
+        where
+          cssMap
+            = M.fromList
+            [ (k,v)
+            | [k,v] <- T.splitOn ":" <$> T.splitOn ";" cssText
+            ]
+processStyle attr = attr
+------------------------------------------------------------------------------
+isComment :: Token -> Bool
+isComment Comment {} = True
+isComment _ = False
+-----------------------------------------------------------------------------
+isDoctype :: Token -> Bool
+isDoctype Doctype {} = True
+isDoctype _ = False
+-----------------------------------------------------------------------------
+isEmptyTextNode :: Token -> Bool
+isEmptyTextNode (ContentText txt)
+  = T.null
+  $ T.filter (`notElem` ['\n', '\t', ' '])
+  $ txt
+isEmptyTextNode _ = False
+-----------------------------------------------------------------------------
 main :: IO ()
 main = do
-  file <- stripDoctype . removeComments <$> T.getContents
-  case parseOnly html file of
+  tokens <- parseTokens <$> T.getContents
+  let filtered =
+        [ case t of
+            ContentText txt ->
+              ContentText (T.strip txt)
+            _ -> t
+        | t <- tokens
+        , not (isComment t)
+            && not (isDoctype t)
+            && not (isEmptyTextNode t)
+        ]
+  case parse html filtered of
     Right r ->
       pPrint r
     Left e -> do
       print e
+      mapM_ print filtered
       exitFailure
-
--- | Layered lexer
-data Mode
-  = InComment
-  | Normal
+-----------------------------------------------------------------------------
+data ParseError a
+  = UnexpectedParse [Token]
+  | Ambiguous [(a, [Token])]
+  | NoParses Token
+  | EmptyStream
   deriving (Show, Eq)
-
-stripDoctype :: Text -> Text
-stripDoctype t = do
-  let firstLine = T.takeWhile (/='\n') t
-  if "<!doctype html>" `T.isPrefixOf` (T.toLower firstLine)
-    then T.drop 1 (T.dropWhile (/='\n') t)
-    else t
-
--- | Remove HTML comments using a layered lexer
---
--- @
--- > removeComments "<a><!-- hey --></a>"
--- > <a></a>
--- @
---
-removeComments :: Text -> Text
-removeComments = go Normal Nothing
-  where
-    go Normal Nothing txt =
-      case T.uncons txt of
-        Nothing ->
-          mempty
-        Just (c, next) ->
-          T.singleton c <>
-            go Normal (Just c) next
-    go Normal (Just _) txt =
-      case T.uncons txt of
-        Nothing ->
-          mempty
-        Just (c,next) ->
-          case T.uncons next of
-            Just (c',next') ->
-              if [c,c'] == "<!"
-              then
-                go InComment (Just c') next'
-              else
-                T.singleton c <>
-                  go Normal (Just c) next
-            Nothing ->
-              T.singleton c <>
-                go Normal (Just c) next
-    go InComment Nothing txt =
-      case T.uncons txt of
-        Nothing ->
-          error "Comment not terminated"
-        Just (c,next) ->
-          go InComment (Just c) next
-    go InComment (Just prev) txt =
-      case T.uncons txt of
-        Nothing ->
-          error "Comment not terminated"
-        Just (c,next) ->
-         if [prev,c] == "->"
-           then go Normal (Just c) next
-           else go InComment (Just c) next
+-----------------------------------------------------------------------------
+parse :: Parser a -> [Token] -> Either (ParseError a) a
+parse _ []          = Left EmptyStream
+parse parser tokens =
+  case runStateT parser tokens of
+    []        -> Left (NoParses (last tokens))
+    [(x, [])] -> Right x
+    [(_, xs)] -> Left (UnexpectedParse xs)
+    xs        -> Left (Ambiguous xs)
+-----------------------------------------------------------------------------
+type Parser a = StateT [Token] [] a
+-----------------------------------------------------------------------------
+satisfy :: (Token -> Bool) -> Parser Token
+satisfy f = StateT $ \tokens ->
+  case tokens of
+    t : ts | f t -> [(t, ts)]
+    _ -> []
+-----------------------------------------------------------------------------
