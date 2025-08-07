@@ -1,8 +1,6 @@
 🍜 miso-from-html
 ===================
-![Hackage](https://img.shields.io/hackage/v/miso-from-html.svg)
-![Haskell Programming Language](https://img.shields.io/badge/language-Haskell-blue.svg)
-[![BSD3 LICENSE](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/dmjio/miso-from-html/blob/master/miso-from-html/LICENSE)
+See [live](https://miso-from-html.haskell-miso.org).
 
 Convert HTML into [miso](https://github.com/dmjio/miso) `View` syntax.
 
