@@ -1,10 +1,8 @@
 🍜 miso-from-html
 ===================
-See [live](https://miso-from-html.haskell-miso.org).
+Use [live](https://miso-from-html.haskell-miso.org) from your browser.
 
 Convert HTML into [miso](https://github.com/dmjio/miso) `View` syntax.
-
-This package uses [html-parse](https://github.com/bgamari/html-parse).
 
 ### Usage
 
