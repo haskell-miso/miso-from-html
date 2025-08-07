@@ -49,7 +49,7 @@ updateModel (OnInput input) = value .= input
 -----------------------------------------------------------------------------
 viewModel :: Model -> View Model Action
 viewModel (Model input) = div_ []
- [ h1_ []
+  [ h1_ []
     [ "🍜 miso-from-html"
     ]
   , h4_ []
@@ -86,6 +86,6 @@ viewModel (Model input) = div_ []
         [ text $ ms (process (fromMisoString input))
         ]
       ]
+    ]
   ]
-]
 -----------------------------------------------------------------------------

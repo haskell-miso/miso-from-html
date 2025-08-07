@@ -12,7 +12,7 @@ Given some HTML
 <nav class="navbar" role="navigation">
   <div class="navbar-brand">
     <a class="navbar-item" href="https://bulma.io">
-      <img src="https://bulma.io/images/bulma-logo.png" width="112" height="28">
+      <img src="https://bulma.io/images/bulma-logo.png" width="112" height="28" />
       <a>ok<p>hey</p></a>
     </a>
   </div>
