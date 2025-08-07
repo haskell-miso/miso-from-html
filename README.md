@@ -90,5 +90,5 @@ When in doubt, check the [W3C validation service](https://validator.w3.org/#vali
 ### Test
 
 ```bash
-$ nix-shell --run 'runghc Main.hs < index.html'
+nix develop --command bash -c cabal run < index.html'
 ```
