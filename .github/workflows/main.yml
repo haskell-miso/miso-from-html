@@ -24,10 +24,10 @@ jobs:
       - name: Build using Nix
         run: nix develop --command bash -c "cabal update && cabal run < index.html"
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./public
+      # - name: Upload artifact
+      #   uses: actions/upload-pages-artifact@v3
+      #   with:
+      #     path: ./public
 
   # deploy:
   #   if: github.ref == 'refs/heads/master'
