@@ -3,13 +3,8 @@ miso-from-html
 ![Hackage](https://img.shields.io/hackage/v/miso-from-html.svg)
 ![Haskell Programming Language](https://img.shields.io/badge/language-Haskell-blue.svg)
 [![BSD3 LICENSE](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/dmjio/miso-from-html/blob/master/miso-from-html/LICENSE)
-[![Build Status](https://travis-ci.org/dmjio/miso-from-html.svg?branch=master)](https://travis-ci.org/dmjio/miso-from-html)
 
 Convert HTML into [miso](https://github.com/dmjio/miso) `View` syntax.
-
-### Features
- - Strips comments
- - Pretty prints style tags as a Haskell `Map` from `Data.Map`
 
 ### Usage
 

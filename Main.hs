@@ -28,10 +28,10 @@ type IsOpen = Bool
 data HTML
   = Node IsOpen HTMLTagName [ HTMLAttr ] [ HTML ]
   | TextNode Text
-  deriving (Eq)
+  deriving stock (Eq)
 -----------------------------------------------------------------------------
 newtype CSS = CSS (Map Text Text)
-  deriving (Eq)
+  deriving stock (Eq)
   deriving newtype (Monoid, Semigroup)
 -----------------------------------------------------------------------------
 instance Show CSS where
