@@ -146,7 +146,6 @@ viewModel (Model input) =
 -----------------------------------------------------------------------------
 showToast :: JSM ()
 showToast = do
-  pure ()
   o <- create
   set @MisoString "text" "Copied to clipboard..." o
   set @Int "duration" 3000 o
