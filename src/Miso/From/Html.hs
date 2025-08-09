@@ -21,6 +21,7 @@ import qualified Data.Text as T
 import           Prelude hiding (takeWhile)
 import           Text.HTML.Parser
 import           Text.Pretty.Simple
+import           Text.HTML.Tree
 -----------------------------------------------------------------------------
 type IsOpen = Bool
 -----------------------------------------------------------------------------
@@ -193,7 +194,7 @@ isEmptyTextNode (ContentText txt)
 isEmptyTextNode _ = False
 -----------------------------------------------------------------------------
 getTokens :: Text -> [Token]
-getTokens input =
+getTokens input = preprocess $
   let
     tokens = parseTokens input
   in
@@ -214,6 +215,14 @@ process input =
       T.pack (show r)
     Left e ->
       T.pack (show e)
+-----------------------------------------------------------------------------
+preprocess :: [Token] -> [Token]
+preprocess = fmap go
+  where
+    go (TagOpen name attrs)
+      | name `elem` nonClosing = TagSelfClose name attrs
+      | otherwise = TagOpen name attrs
+    go x = x
 -----------------------------------------------------------------------------
 processPretty :: Text -> Text
 processPretty input =
