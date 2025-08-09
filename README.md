@@ -79,7 +79,7 @@ This is valid
 </div>
 ```
 
-Also, if your HTML isn't parsing, make sure it's valid, like `<img />` needs to be closed for example.
+Also, if your HTML isn't parsing, make sure it's valid.
 
 When in doubt, check the [W3C validation service](https://validator.w3.org/#validate_by_input).
 
