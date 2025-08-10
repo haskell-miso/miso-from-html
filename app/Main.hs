@@ -86,6 +86,18 @@ updateModel Copied =
 updateModel (SetText txt) =
   value .= txt
 -----------------------------------------------------------------------------
+githubStar :: View parent action
+githubStar = iframe_
+    [ title_ "GitHub"
+    , height_ "30"
+    , width_ "170"
+    , textProp "scrolling" "0"
+    , textProp "frameborder" "0"
+    , src_
+      "https://ghbtns.com/github-btn.html?user=haskell-miso&repo=miso-from-html&type=star&count=true&size=large"
+    ]
+    []
+-----------------------------------------------------------------------------
 viewModel :: Model -> View Model Action
 viewModel (Model input) =
   div_
@@ -99,6 +111,7 @@ viewModel (Model input) =
     , h4_ []
       [ "Convert HTML to miso"
       ]
+    , githubStar
     , button_
       [ onClick CopyToClipboard
       , CSS.style_
