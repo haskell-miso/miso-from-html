@@ -67,14 +67,32 @@ instance Show HTMLAttr where
     [ T.unpack v
     ]
   show (HTMLAttr k (Just v))
-    | T.any (=='-') k =
+    | "data-" `T.isPrefixOf` k =
       mconcat
-      [ "textProp \""
+      [ " data_ \""
       , T.unpack k
       , "\""
       , " \""
       , T.unpack v
+      , "\" "
+      ]
+    | "aria-" `T.isPrefixOf` k =
+      mconcat
+      [ " aria_ \""
+      , T.unpack k
       , "\""
+      , " \""
+      , T.unpack v
+      , "\" "
+      ]
+    | T.any (=='-') k =
+      mconcat
+      [ " textProp \""
+      , T.unpack k
+      , "\""
+      , " \""
+      , T.unpack v
+      , "\" "
       ]
     | otherwise =
       mconcat
@@ -82,7 +100,7 @@ instance Show HTMLAttr where
       , "_ "
       , "\""
       , T.unpack v
-      , "\""
+      , "\" "
       ]
   show (HTMLAttr "checked" Nothing) =
     "checked_ True"
