@@ -96,7 +96,8 @@ instance Show HTMLAttr where
       ]
     | otherwise =
       mconcat
-      [ T.unpack k
+      [ " "
+      , T.unpack k
       , "_ "
       , "\""
       , T.unpack v
