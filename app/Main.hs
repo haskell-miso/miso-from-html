@@ -1,6 +1,5 @@
 -----------------------------------------------------------------------------
 {-# LANGUAGE CPP               #-}
-{-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeApplications  #-}
 {-# LANGUAGE OverloadedStrings #-}
 -----------------------------------------------------------------------------
@@ -63,7 +62,7 @@ app :: App Model Action
 app = (component (Model mempty) updateModel viewModel)
 #ifndef WASM
   { styles =
-      [ Style $ ms $(embedFile "static/style.css")
+      [ Href "assets/style.css"
       , Href "https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" 
       ]
   , scripts =
