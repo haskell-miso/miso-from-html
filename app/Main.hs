@@ -28,7 +28,10 @@ import           Data.FileEmbed
 foreign export javascript "hs_start" main :: IO ()
 #endif
 -----------------------------------------------------------------------------
-newtype Model = Model { _value :: MisoString }
+data Mode = Editing | Clear
+  deriving (Show, Eq)
+-----------------------------------------------------------------------------
+data Model = Model { _value :: MisoString, _mode :: Mode }
   deriving (Show, Eq)
 -----------------------------------------------------------------------------
 instance ToMisoString Model where
@@ -36,6 +39,9 @@ instance ToMisoString Model where
 -----------------------------------------------------------------------------
 value :: Lens Model MisoString
 value = lens _value $ \m v -> m { _value = v }
+-----------------------------------------------------------------------------
+mode :: Lens Model Mode
+mode = lens _mode $ \m v -> m { _mode = v }
 -----------------------------------------------------------------------------
 data Action
   = OnInput MisoString
@@ -59,7 +65,7 @@ formatString = fmap toMisoString . ormolu cfg "<input>" . fromMisoString
       }
 -----------------------------------------------------------------------------
 app :: App Model Action
-app = (component (Model mempty) updateModel viewModel)
+app = (component (Model mempty Clear) updateModel viewModel)
 #ifndef WASM
   { styles =
       [ Href "assets/style.css"
@@ -73,6 +79,7 @@ app = (component (Model mempty) updateModel viewModel)
 -----------------------------------------------------------------------------
 updateModel :: Action -> Transition Model Action
 updateModel (OnInput input) = do
+  mode .= Editing
   let output = ms (process (fromMisoString input))
   io (SetText <$> liftIO (formatString output))
 updateModel CopyToClipboard = do
@@ -84,6 +91,8 @@ updateModel Copied =
   io_ showToast
 updateModel (SetText txt) =
   value .= txt
+updateModel ClearText =
+  mode .= Clear 
 -----------------------------------------------------------------------------
 githubStar :: View parent action
 githubStar = iframe_
@@ -112,7 +121,7 @@ viewModel (Model input) =
       [ "Convert HTML to miso"
       ]
     , button_
-      [ onClick (SetText mempty)
+      [ onClick ClearText
       , CSS.style_
         [ CSS.width "120px"
         , CSS.height "50px"
@@ -145,10 +154,13 @@ viewModel (Model input) =
           [ "HTML Input"
           ]
         , textarea_
-          [ placeholder_ "Type your text here..."
+          ([ placeholder_ "Type your text here..."
           , class_ "input-area"
           , onInput OnInput
-          ]
+          ] ++
+          [ value_ ""
+          | mode == Clear
+          ])
           []
         ]
       , div_
