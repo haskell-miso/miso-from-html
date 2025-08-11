@@ -85,10 +85,6 @@ executable app
     miso-from-html,
     fourmolu
 
-  if !arch(wasm32)
-    build-depends:
-      file-embed
-
   default-language:
     Haskell2010
 
