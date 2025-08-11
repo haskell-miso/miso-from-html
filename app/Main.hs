@@ -20,22 +20,29 @@ import qualified Miso.Style as CSS
 import           Ormolu (ormolu)
 import           Ormolu.Config
 -----------------------------------------------------------------------------
-#ifndef WASM
-import           Data.FileEmbed
-#endif
------------------------------------------------------------------------------
 #ifdef WASM
 foreign export javascript "hs_start" main :: IO ()
 #endif
 -----------------------------------------------------------------------------
-newtype Model = Model { _value :: MisoString }
+data Mode
+  = Editing
+  | Clear
   deriving (Show, Eq)
 -----------------------------------------------------------------------------
+data Model
+  = Model
+  { _value :: MisoString
+  , _mode :: Mode
+  } deriving (Show, Eq)
+-----------------------------------------------------------------------------
 instance ToMisoString Model where
-  toMisoString (Model v) = toMisoString v
+  toMisoString (Model v _) = toMisoString v
 -----------------------------------------------------------------------------
 value :: Lens Model MisoString
 value = lens _value $ \m v -> m { _value = v }
+-----------------------------------------------------------------------------
+mode :: Lens Model Mode
+mode = lens _mode $ \m v -> m { _mode = v }
 -----------------------------------------------------------------------------
 data Action
   = OnInput MisoString
@@ -43,6 +50,7 @@ data Action
   | Copied
   | ErrorCopy JSVal
   | SetText MisoString
+  | ClearText
 -----------------------------------------------------------------------------
 main :: IO ()
 main = run (startApp app)
@@ -59,7 +67,7 @@ formatString = fmap toMisoString . ormolu cfg "<input>" . fromMisoString
       }
 -----------------------------------------------------------------------------
 app :: App Model Action
-app = (component (Model mempty) updateModel viewModel)
+app = (component (Model mempty Clear) updateModel viewModel)
 #ifndef WASM
   { styles =
       [ Href "assets/style.css"
@@ -73,6 +81,7 @@ app = (component (Model mempty) updateModel viewModel)
 -----------------------------------------------------------------------------
 updateModel :: Action -> Transition Model Action
 updateModel (OnInput input) = do
+  mode .= Editing
   let output = ms (process (fromMisoString input))
   io (SetText <$> liftIO (formatString output))
 updateModel CopyToClipboard = do
@@ -81,11 +90,14 @@ updateModel CopyToClipboard = do
 updateModel (ErrorCopy err) =
   io_ (consoleLog' err)
 updateModel Copied =
-  io_ showToast
+  io_ (showToast "Copied to clipboard...")
 updateModel (SetText txt) =
   value .= txt
+updateModel ClearText = do
+  mode .= Clear
+  value .= mempty
 -----------------------------------------------------------------------------
-githubStar :: View parent action
+githubStar :: View model action
 githubStar = iframe_
     [ title_ "GitHub"
     , height_ "30"
@@ -98,7 +110,7 @@ githubStar = iframe_
     []
 -----------------------------------------------------------------------------
 viewModel :: Model -> View Model Action
-viewModel (Model input) =
+viewModel (Model input mode_) =
   div_
   []
   [ githubStar
@@ -112,7 +124,7 @@ viewModel (Model input) =
       [ "Convert HTML to miso"
       ]
     , button_
-      [ onClick (SetText mempty)
+      [ onClick ClearText
       , CSS.style_
         [ CSS.width "120px"
         , CSS.height "50px"
@@ -144,10 +156,13 @@ viewModel (Model input) =
           ]
           [ "HTML Input"
           ]
-        , textarea_
+        , optionalAttrs
+          textarea_
           [ placeholder_ "Type your text here..."
           , class_ "input-area"
           , onInput OnInput
+          ] (mode_ == Clear)
+          [ value_ ""
           ]
           []
         ]
@@ -167,10 +182,10 @@ viewModel (Model input) =
       ]
    ]
 -----------------------------------------------------------------------------
-showToast :: JSM ()
-showToast = do
+showToast :: MisoString -> JSM ()
+showToast msg = do
   o <- create
-  set @MisoString "text" "Copied to clipboard..." o
+  set @MisoString "text" msg o
   set @Int "duration" 3000 o
   toastify <- new (jsg @MisoString "Toastify") [o]
   void $ toastify # ("showToast" :: MisoString) $ ()
