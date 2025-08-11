@@ -97,7 +97,7 @@ updateModel ClearText = do
   mode .= Clear
   value .= mempty
 -----------------------------------------------------------------------------
-githubStar :: View parent action
+githubStar :: View model action
 githubStar = iframe_
     [ title_ "GitHub"
     , height_ "30"
@@ -156,14 +156,14 @@ viewModel (Model input mode_) =
           ]
           [ "HTML Input"
           ]
-        , textarea_
-          ([ placeholder_ "Type your text here..."
+        , optionalAttrs
+          textarea_
+          [ placeholder_ "Type your text here..."
           , class_ "input-area"
           , onInput OnInput
-          ] ++
+          ] (mode_ == Clear)
           [ value_ ""
-          | mode_ == Clear
-          ])
+          ]
           []
         ]
       , div_
