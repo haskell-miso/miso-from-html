@@ -112,14 +112,25 @@ viewModel (Model input) =
       [ "Convert HTML to miso"
       ]
     , button_
-      [ onClick CopyToClipboard
+      [ onClick (SetText mempty)
       , CSS.style_
-        [ CSS.width "180px"
-        , CSS.height "60px"
-        , CSS.margin "5px"
+        [ CSS.width "120px"
+        , CSS.height "50px"
+        , CSS.fontSize "20px"
         ]
       ]
-      [ "Copy to Clipboard"
+      [ "Clear"
+      ]
+    , button_
+      [ onClick CopyToClipboard
+      , CSS.style_
+        [ CSS.width "120px"
+        , CSS.height "50px"
+        , CSS.margin "5px"
+        , CSS.fontSize "20px"
+        ]
+      ]
+      [ "Copy"
       ]
     ]
     , div_
