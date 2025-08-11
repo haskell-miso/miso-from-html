@@ -20,22 +20,23 @@ import qualified Miso.Style as CSS
 import           Ormolu (ormolu)
 import           Ormolu.Config
 -----------------------------------------------------------------------------
-#ifndef WASM
-import           Data.FileEmbed
-#endif
------------------------------------------------------------------------------
 #ifdef WASM
 foreign export javascript "hs_start" main :: IO ()
 #endif
 -----------------------------------------------------------------------------
-data Mode = Editing | Clear
+data Mode
+  = Editing
+  | Clear
   deriving (Show, Eq)
 -----------------------------------------------------------------------------
-data Model = Model { _value :: MisoString, _mode :: Mode }
-  deriving (Show, Eq)
+data Model
+  = Model
+  { _value :: MisoString
+  , _mode :: Mode
+  } deriving (Show, Eq)
 -----------------------------------------------------------------------------
 instance ToMisoString Model where
-  toMisoString (Model v) = toMisoString v
+  toMisoString (Model v _) = toMisoString v
 -----------------------------------------------------------------------------
 value :: Lens Model MisoString
 value = lens _value $ \m v -> m { _value = v }
@@ -49,6 +50,7 @@ data Action
   | Copied
   | ErrorCopy JSVal
   | SetText MisoString
+  | ClearText
 -----------------------------------------------------------------------------
 main :: IO ()
 main = run (startApp app)
@@ -88,11 +90,12 @@ updateModel CopyToClipboard = do
 updateModel (ErrorCopy err) =
   io_ (consoleLog' err)
 updateModel Copied =
-  io_ showToast
+  io_ (showToast "Copied to clipboard...")
 updateModel (SetText txt) =
   value .= txt
-updateModel ClearText =
-  mode .= Clear 
+updateModel ClearText = do
+  mode .= Clear
+  value .= mempty
 -----------------------------------------------------------------------------
 githubStar :: View parent action
 githubStar = iframe_
@@ -107,7 +110,7 @@ githubStar = iframe_
     []
 -----------------------------------------------------------------------------
 viewModel :: Model -> View Model Action
-viewModel (Model input) =
+viewModel (Model input mode_) =
   div_
   []
   [ githubStar
@@ -159,7 +162,7 @@ viewModel (Model input) =
           , onInput OnInput
           ] ++
           [ value_ ""
-          | mode == Clear
+          | mode_ == Clear
           ])
           []
         ]
@@ -179,10 +182,10 @@ viewModel (Model input) =
       ]
    ]
 -----------------------------------------------------------------------------
-showToast :: JSM ()
-showToast = do
+showToast :: MisoString -> JSM ()
+showToast msg = do
   o <- create
-  set @MisoString "text" "Copied to clipboard..." o
+  set @MisoString "text" msg o
   set @Int "duration" 3000 o
   toastify <- new (jsg @MisoString "Toastify") [o]
   void $ toastify # ("showToast" :: MisoString) $ ()
