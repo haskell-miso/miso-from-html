@@ -101,7 +101,8 @@ viewModel :: Model -> View Model Action
 viewModel (Model input) =
   div_
   []
-  [ div_
+  [ githubStar
+  , div_
     [ CSS.style_ [ CSS.textAlign "center" ]
     ]
     [ h1_ []
@@ -110,7 +111,6 @@ viewModel (Model input) =
     , h4_ []
       [ "Convert HTML to miso"
       ]
-    , githubStar
     , button_
       [ onClick CopyToClipboard
       , CSS.style_
