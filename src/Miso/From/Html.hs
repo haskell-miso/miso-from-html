@@ -67,19 +67,21 @@ instance Show HTMLAttr where
     [ T.unpack v
     ]
   show (HTMLAttr k (Just v))
-    | "data-" `T.isPrefixOf` k =
+    | "data-" `T.isPrefixOf` k
+    , Just rest <- T.stripPrefix "data-" k =
       mconcat
       [ " data_ \""
-      , T.unpack k
+      , T.unpack rest
       , "\""
       , " \""
       , T.unpack v
       , "\" "
       ]
-    | "aria-" `T.isPrefixOf` k =
+    | "aria-" `T.isPrefixOf` k
+    , Just rest <- T.stripPrefix "aria-" k =
       mconcat
       [ " aria_ \""
-      , T.unpack k
+      , T.unpack rest
       , "\""
       , " \""
       , T.unpack v
