@@ -1,5 +1,6 @@
 -----------------------------------------------------------------------------
 {-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE ViewPatterns               #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE FlexibleInstances          #-}
@@ -8,6 +9,7 @@
 -----------------------------------------------------------------------------
 module Miso.From.Html where
 -----------------------------------------------------------------------------
+import Data.Char
 import           Control.Monad (guard)
 import           Control.Monad.State
 import           Control.Applicative
@@ -61,12 +63,24 @@ instance Show HTML where
     | isOpen
     ]
 -----------------------------------------------------------------------------
+upper :: Text -> Text
+upper (T.uncons -> Just (h,xs)) = T.cons (toUpper h) xs
+upper x = x
+-----------------------------------------------------------------------------
 instance Show HTMLAttr where
   show (HTMLAttr "style" (Just v)) =
     mconcat
     [ T.unpack v
     ]
   show (HTMLAttr k (Just v))
+    | "stroke-" `T.isPrefixOf` k
+    , Just rest <- T.stripPrefix "stroke-" k =
+      mconcat
+      [ " stroke" <> T.unpack (upper rest) <> "_"
+      , " \""
+      , T.unpack v
+      , "\" "
+      ]
     | "data-" `T.isPrefixOf` k
     , Just rest <- T.stripPrefix "data-" k =
       mconcat
