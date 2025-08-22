@@ -119,7 +119,7 @@ instance Show HTMLAttr where
       , T.unpack v
       , "\" "
       ]
-  show (HTMLAttr x@(`T.isPrefixOf` "data-" -> True) Nothing) =
+  show (HTMLAttr x@(T.isPrefixOf "data-" -> True) Nothing) =
     case T.stripPrefix "data-" x of
       Just rest -> "data_ " <> "\"" <> rest <> "\"" <> " \"\""
       Nothing -> x
