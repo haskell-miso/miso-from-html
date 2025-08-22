@@ -121,8 +121,8 @@ instance Show HTMLAttr where
       ]
   show (HTMLAttr x@(T.isPrefixOf "data-" -> True) Nothing) =
     case T.stripPrefix "data-" x of
-      Just rest -> "data_ " <> "\"" <> rest <> "\"" <> " \"\""
-      Nothing -> x
+      Just rest -> "data_ " <> "\"" <> T.unpack rest <> "\"" <> " \"\""
+      Nothing -> T.unpack x
   show (HTMLAttr "checked" Nothing) =
     "checked_ True"
   show (HTMLAttr k Nothing) =
