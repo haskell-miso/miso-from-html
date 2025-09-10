@@ -9,10 +9,10 @@
 -----------------------------------------------------------------------------
 module Miso.From.Html where
 -----------------------------------------------------------------------------
-import Data.Char
 import           Control.Monad (guard)
 import           Control.Monad.State
 import           Control.Applicative
+import           Data.Char
 import           Data.List hiding (takeWhile)
 import           Data.Map (Map)
 import qualified Data.Map as M
@@ -55,7 +55,8 @@ instance Show HTML where
   show (TextNode x) = "\"" <> T.unpack x <> "\""
   show (Node isOpen t as cs) =
     mconcat $
-    [ T.unpack t
+    [ "H."
+    , T.unpack t
     , "_ "
     , show as
     ] ++
@@ -84,7 +85,7 @@ instance Show HTMLAttr where
     | "data-" `T.isPrefixOf` k
     , Just rest <- T.stripPrefix "data-" k =
       mconcat
-      [ " data_ \""
+      [ " P.data_ \""
       , T.unpack rest
       , "\""
       , " \""
@@ -94,7 +95,7 @@ instance Show HTMLAttr where
     | "aria-" `T.isPrefixOf` k
     , Just rest <- T.stripPrefix "aria-" k =
       mconcat
-      [ " aria_ \""
+      [ " P.aria_ \""
       , T.unpack rest
       , "\""
       , " \""
@@ -112,7 +113,7 @@ instance Show HTMLAttr where
       ]
     | otherwise =
       mconcat
-      [ " "
+      [ " P."
       , T.unpack k
       , "_ "
       , "\""
@@ -121,10 +122,10 @@ instance Show HTMLAttr where
       ]
   show (HTMLAttr x@(T.isPrefixOf "data-" -> True) Nothing) =
     case T.stripPrefix "data-" x of
-      Just rest -> "data_ " <> "\"" <> T.unpack rest <> "\"" <> " \"\""
+      Just rest -> "P.data_ " <> "\"" <> T.unpack rest <> "\"" <> " \"\""
       Nothing -> T.unpack x
   show (HTMLAttr "checked" Nothing) =
-    "checked_ True"
+    "P.checked_ True"
   show (HTMLAttr k Nothing) =
     mconcat
     [ "textProp \""
