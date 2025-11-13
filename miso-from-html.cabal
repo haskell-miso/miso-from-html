@@ -48,6 +48,7 @@ library
     bytestring,
     containers,
     html-parse,
+    jsaddle,
     miso,
     mtl,
     pretty-simple,
