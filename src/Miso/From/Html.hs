@@ -53,36 +53,11 @@ data HTMLAttr = HTMLAttr Text (Maybe Text)
 -----------------------------------------------------------------------------
 instance Show HTML where
   show (TextNode x) = "\"" <> T.unpack x <> "\""
-  show (Node _ "path" as _) =
-    mconcat $
-    [ T.unpack t
-    , "_ "
-    , show as
-    ]
-  show (Node _ "rect" as _) =
-    mconcat $
-    [ T.unpack t
-    , "_ "
-    , show as
-    ]   
-  show (Node _ "circle" as _) =
-    mconcat $
-    [ T.unpack t
-    , "_ "
-    , show as
-    ] 
-  show (Node _ "polyline" as _) =
-    mconcat $
-    [ T.unpack t
-    , "_ "
-    , show as
-    ]
-  show (Node _ "line" as _) =
-    mconcat $
-    [ T.unpack t
-    , "_ "
-    , show as
-    ]        
+  show (Node _ "path" as _) = show (Node False "path" as [])
+  show (Node _ "rect" as _) = show (Node False "rect" as [])
+  show (Node _ "circle" as _) = show (Node False "circle" as [])
+  show (Node _ "polyline" as _) = show (Node False "polyline" as [])
+  show (Node _ "line" as _) = show (Node False "line" as [])
   show (Node isOpen t as cs) =
     mconcat $
     [ T.unpack t
