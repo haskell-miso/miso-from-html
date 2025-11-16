@@ -10,12 +10,14 @@ import           Control.Monad.IO.Class (liftIO)
 import           Prelude hiding (unlines, rem)
 import           Language.Javascript.JSaddle
 -----------------------------------------------------------------------------
-import           Miso hiding (media_)
-import           Miso.Media
+import           Miso
+import           Miso.Html hiding (title_)
+import           Miso.Html.Property
+import           Miso.Navigator
 import           Miso.Lens hiding (set)
 import           Miso.From.Html (process)
 import           Miso.String
-import qualified Miso.Style as CSS
+import qualified Miso.CSS as CSS
 -----------------------------------------------------------------------------
 import           Ormolu (ormolu)
 import           Ormolu.Config
