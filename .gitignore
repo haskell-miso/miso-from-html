@@ -9,3 +9,4 @@ TAGS
 dist*
 result
 public/
+.*~
