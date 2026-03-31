@@ -9,7 +9,7 @@
 -----------------------------------------------------------------------------
 module Miso.From.Html where
 -----------------------------------------------------------------------------
-import Data.Char
+import           Data.Char
 import           Control.Monad (guard)
 import           Control.Monad.State
 import           Control.Applicative

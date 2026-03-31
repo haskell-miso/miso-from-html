@@ -6,9 +6,7 @@
 module Main (main) where
 -----------------------------------------------------------------------------
 import           Control.Monad
-import           Control.Monad.IO.Class (liftIO)
 import           Prelude hiding (unlines, rem)
-import           Language.Javascript.JSaddle
 -----------------------------------------------------------------------------
 import           Miso
 import           Miso.Html hiding (title_)
@@ -55,7 +53,7 @@ data Action
   | ClearText
 -----------------------------------------------------------------------------
 main :: IO ()
-main = run (startApp app)
+main = startApp defaultEvents app
 -----------------------------------------------------------------------------
 formatString :: MisoString -> IO MisoString
 formatString = fmap toMisoString . ormolu cfg "<input>" . fromMisoString
@@ -81,7 +79,7 @@ app = (component (Model mempty Clear) updateModel viewModel)
   }
 #endif
 -----------------------------------------------------------------------------
-updateModel :: Action -> Transition Model Action
+updateModel :: Action -> Effect parent Model Action
 updateModel (OnInput input) = do
   mode .= Editing
   let output = ms (process (fromMisoString input))
@@ -184,11 +182,11 @@ viewModel (Model input mode_) =
       ]
    ]
 -----------------------------------------------------------------------------
-showToast :: MisoString -> JSM ()
+showToast :: MisoString -> IO ()
 showToast msg = do
   o <- create
   set @MisoString "text" msg o
   set @Int "duration" 3000 o
-  toastify <- new (jsg @MisoString "Toastify") [o]
+  toastify <- new (jsg "Toastify") [o]
   void $ toastify # ("showToast" :: MisoString) $ ()
 -----------------------------------------------------------------------------

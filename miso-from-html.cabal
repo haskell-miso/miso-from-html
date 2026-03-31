@@ -80,7 +80,6 @@ executable app
     app
   build-depends:
     base < 5,
-    jsaddle,
     miso,
     miso-from-html,
     fourmolu
