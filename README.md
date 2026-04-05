@@ -4,6 +4,10 @@ Use [live](https://miso-from-html.haskell-miso.org) from your browser.
 
 Convert HTML into [miso](https://github.com/dmjio/miso) `View` syntax.
 
+<a href="http://hackage.haskell.org/package/miso-from-html">
+  <img src="https://img.shields.io/hackage/v/miso-from-html?style=for-the-badge" alt="Hackage">
+</a> 
+
 ### Usage
 
 Given some HTML
