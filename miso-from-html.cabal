@@ -45,13 +45,13 @@ library
     Miso.From.Html
   build-depends:
     base < 5,
-    bytestring,
-    containers,
-    html-parse,
-    miso,
-    mtl,
-    pretty-simple,
-    text
+    bytestring < 0.13,
+    containers < 0.9,
+    html-parse < 0.3,
+    miso < 1.10,
+    mtl < 2.4,
+    pretty-simple < 4.2,
+    text < 2.2
 
 -- build w/ vanilla ghc
 executable miso-from-html
@@ -82,7 +82,7 @@ executable app
     base < 5,
     miso,
     miso-from-html,
-    fourmolu
+    fourmolu < 0.20
 
   default-language:
     Haskell2010
