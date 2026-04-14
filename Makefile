@@ -3,10 +3,10 @@
 all: update build optim
 
 update:
-	wasm32-wasi-cabal update
+	wasm32-wasi-cabal update --allow-newer
 
 build:
-	wasm32-wasi-cabal build app
+	wasm32-wasi-cabal build app --allow-newer
 	rm -rf public
 	cp -r static public
 	cp -rv assets/ public
