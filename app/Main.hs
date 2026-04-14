@@ -1,5 +1,6 @@
 -----------------------------------------------------------------------------
 {-# LANGUAGE CPP               #-}
+{-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TypeApplications  #-}
 {-# LANGUAGE OverloadedStrings #-}
 -----------------------------------------------------------------------------
@@ -15,6 +16,7 @@ import           Miso.Navigator
 import           Miso.Lens hiding (set)
 import           Miso.From.Html (process)
 import           Miso.String
+import           Miso.FFI.QQ
 import qualified Miso.CSS as CSS
 -----------------------------------------------------------------------------
 import           Ormolu (ormolu)
@@ -183,9 +185,7 @@ viewModel (Model input mode_) =
 -----------------------------------------------------------------------------
 showToast :: MisoString -> IO ()
 showToast msg = do
-  o <- create
-  set @MisoString "text" msg o
-  set @Int "duration" 3000 o
-  toastify <- new (jsg "Toastify") [o]
-  void $ toastify # ("showToast" :: MisoString) $ ()
+  [js| var toastify = new Toastify({ duration : 3000, text : ${msg} });
+       toastify.showToast();
+     |]
 -----------------------------------------------------------------------------
