@@ -1,5 +1,6 @@
 -----------------------------------------------------------------------------
 {-# LANGUAGE CPP               #-}
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TypeApplications  #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -82,22 +83,23 @@ app = (component (Model mempty Clear) updateModel viewModel)
 #endif
 -----------------------------------------------------------------------------
 updateModel :: Action -> Effect parent Model Action
-updateModel (OnInput input) = do
-  mode .= Editing
-  let output = ms (process (fromMisoString input))
-  io (SetText <$> liftIO (formatString output))
-updateModel CopyToClipboard = do
-  input <- use value
-  copyClipboard input Copied ErrorCopy
-updateModel (ErrorCopy err) =
-  io_ (consoleLog' err)
-updateModel Copied =
-  io_ (showToast "Copied to clipboard...")
-updateModel (SetText txt) =
-  value .= txt
-updateModel ClearText = do
-  mode .= Clear
-  value .= mempty
+updateModel = \case
+  OnInput input -> do
+    mode .= Editing
+    let output = ms (process (fromMisoString input))
+    io (SetText <$> liftIO (formatString output))
+  CopyToClipboard -> do
+    input <- use value
+    copyClipboard input Copied ErrorCopy
+  ErrorCopy err ->
+    io_ (consoleLog' err)
+  Copied ->
+    io_ (showToast "Copied to clipboard...")
+  SetText txt ->
+    value .= txt
+  ClearText -> do
+    mode .= Clear
+    value .= mempty
 -----------------------------------------------------------------------------
 githubStar :: View model action
 githubStar = iframe_
