@@ -156,7 +156,7 @@ viewModel (Model input mode_) =
           ]
           [ "HTML Input"
           ]
-        , optionalAttrs
+        , optionalVoidAttrs
           textarea_
           [ placeholder_ "Type your text here..."
           , class_ "input-area"
@@ -164,7 +164,6 @@ viewModel (Model input mode_) =
           ] (mode_ == Clear)
           [ value_ ""
           ]
-          []
         ]
       , div_
         [ class_ "panel" ]
