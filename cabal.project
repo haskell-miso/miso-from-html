@@ -12,6 +12,6 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/haskell/process
-  tag: 374c5049ac49f821adf6858eb3bd29fb4fe16906
+  ref: 374c5049ac49f821adf6858eb3bd29fb4fe16906
 
 flags: +template-haskell
