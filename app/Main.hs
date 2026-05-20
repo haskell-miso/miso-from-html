@@ -70,11 +70,11 @@ app :: App Model Action
 app = (component (Model mempty Clear) updateModel viewModel)
 #ifndef WASM
   { styles =
-      [ Href "assets/style.css"
-      , Href "https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" 
+      [ Href "assets/style.css" False
+      , Href "https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" False
       ]
   , scripts =
-      [ Src "https://cdn.jsdelivr.net/npm/toastify-js"
+      [ Src "https://cdn.jsdelivr.net/npm/toastify-js" False
       ]
   }
 #endif
@@ -156,15 +156,15 @@ viewModel (Model input mode_) =
           ]
           [ "HTML Input"
           ]
-        , optionalAttrs
-          textarea_
+        , textarea_ $
           [ placeholder_ "Type your text here..."
           , class_ "input-area"
           , onInput OnInput
-          ] (mode_ == Clear)
+          , value_ ""
+          ] ++
           [ value_ ""
+          | mode_ == Clear
           ]
-          []
         ]
       , div_
         [ class_ "panel" ]
