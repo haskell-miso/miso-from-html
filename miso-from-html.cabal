@@ -48,7 +48,7 @@ library
     bytestring < 0.13,
     containers < 0.9,
     html-parse < 0.3,
-    miso < 1.10,
+    miso < 2.0,
     mtl < 2.4,
     pretty-simple < 4.2,
     text < 2.2
