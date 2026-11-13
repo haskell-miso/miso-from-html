@@ -82,7 +82,7 @@ executable app
     base < 5,
     miso,
     miso-from-html,
-    fourmolu < 0.20
+    fourmolu < 0.22
 
   default-language:
     Haskell2010

@@ -79,7 +79,7 @@ app = (component (Model mempty Clear) updateModel viewModel)
   }
 #endif
 -----------------------------------------------------------------------------
-updateModel :: Action -> Effect parent Model Action
+updateModel :: Action -> Effect () () Model Action
 updateModel (OnInput input) = do
   mode .= Editing
   let output = ms (process (fromMisoString input))
@@ -97,7 +97,7 @@ updateModel ClearText = do
   mode .= Clear
   value .= mempty
 -----------------------------------------------------------------------------
-githubStar :: View model action
+githubStar :: View context props model action
 githubStar = iframe_
     [ title_ "GitHub"
     , height_ "30"
@@ -109,7 +109,7 @@ githubStar = iframe_
     ]
     []
 -----------------------------------------------------------------------------
-viewModel :: Model -> View Model Action
+viewModel :: Model -> View () () Model Action
 viewModel (Model input mode_) =
   div_
   []
