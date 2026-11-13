@@ -39,7 +39,7 @@ newtype CSS = CSS (Map Text Text)
 instance Show CSS where
   show (CSS hmap) =
     mconcat
-    [ "CSS.style [ "
+    [ "CSS.style_ [ "
     , intercalate "," (go <$> M.assocs hmap)
     , " ]"
     ]
