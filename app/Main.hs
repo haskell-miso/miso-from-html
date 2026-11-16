@@ -24,25 +24,16 @@ import           Ormolu.Config
 foreign export javascript "hs_start" main :: IO ()
 #endif
 -----------------------------------------------------------------------------
-data Mode
-  = Editing
-  | Clear
-  deriving (Show, Eq)
------------------------------------------------------------------------------
 data Model
   = Model
   { _value :: MisoString
-  , _mode :: Mode
   } deriving (Show, Eq)
 -----------------------------------------------------------------------------
 instance ToMisoString Model where
-  toMisoString (Model v _) = toMisoString v
+  toMisoString (Model v) = toMisoString v
 -----------------------------------------------------------------------------
 value :: Lens Model MisoString
 value = lens _value $ \m v -> m { _value = v }
------------------------------------------------------------------------------
-mode :: Lens Model Mode
-mode = lens _mode $ \m v -> m { _mode = v }
 -----------------------------------------------------------------------------
 data Action
   = OnInput MisoString
@@ -67,7 +58,7 @@ formatString = fmap toMisoString . ormolu cfg "<input>" . fromMisoString
       }
 -----------------------------------------------------------------------------
 app :: App Model Action
-app = (component (Model mempty Clear) updateModel viewModel)
+app = (component (Model mempty) updateModel viewModel)
 #ifndef WASM
   { styles =
       [ Href "assets/style.css" False
@@ -81,7 +72,6 @@ app = (component (Model mempty Clear) updateModel viewModel)
 -----------------------------------------------------------------------------
 updateModel :: Action -> Effect () () Model Action
 updateModel (OnInput input) = do
-  mode .= Editing
   let output = ms (process (fromMisoString input))
   io (SetText <$> liftIO (formatString output))
 updateModel CopyToClipboard = do
@@ -94,8 +84,10 @@ updateModel Copied =
 updateModel (SetText txt) =
   value .= txt
 updateModel ClearText = do
-  mode .= Clear
   value .= mempty
+  io_ $ do
+    el <- getElementById "html-input"
+    setField el "value" ("" :: MisoString)
 -----------------------------------------------------------------------------
 githubStar :: View context props model action
 githubStar = iframe_
@@ -110,7 +102,7 @@ githubStar = iframe_
     []
 -----------------------------------------------------------------------------
 viewModel :: Model -> View () () Model Action
-viewModel (Model input mode_) =
+viewModel (Model input) =
   div_
   []
   [ githubStar
@@ -156,14 +148,11 @@ viewModel (Model input mode_) =
           ]
           [ "HTML Input"
           ]
-        , textarea_ $
-          [ placeholder_ "Type your text here..."
+        , textarea_
+          [ id_ "html-input"
+          , placeholder_ "Type your text here..."
           , class_ "input-area"
           , onInput OnInput
-          , value_ ""
-          ] ++
-          [ value_ ""
-          | mode_ == Clear
           ]
         ]
       , div_
